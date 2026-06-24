@@ -16,13 +16,24 @@ from multi_agent_research_lab.evaluation.benchmark import run_benchmark
 from multi_agent_research_lab.evaluation.report import render_markdown_report
 from multi_agent_research_lab.services.storage import LocalArtifactStore
 
+import os
+from dotenv import load_dotenv
+
 app = typer.Typer(help="Multi-Agent Research Lab starter CLI")
 console = Console()
 
 
 def _init() -> None:
+    load_dotenv()
     settings = get_settings()
     configure_logging(settings.log_level)
+    
+    # Expose LangSmith configs to os.environ so LangGraph auto-tracing is triggered
+    if settings.langsmith_api_key:
+        os.environ["LANGCHAIN_TRACING_V2"] = "true"
+        os.environ["LANGCHAIN_API_KEY"] = settings.langsmith_api_key
+        os.environ["LANGCHAIN_PROJECT"] = settings.langsmith_project
+        os.environ["LANGCHAIN_ENDPOINT"] = "https://api.smith.langchain.com"
 
 
 def _run_baseline(query: str) -> ResearchState:
